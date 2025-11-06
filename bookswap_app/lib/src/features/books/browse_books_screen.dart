@@ -4,7 +4,6 @@ import 'package:cached_network_image/cached_network_image.dart';
 import '../../core/providers/providers.dart';
 import '../../core/models/book_model.dart';
 import '../../core/models/swap_model.dart';
-import '../../core/services/firestore_service.dart';
 
 class BrowseBooksScreen extends ConsumerWidget {
   const BrowseBooksScreen({super.key});
@@ -222,7 +221,8 @@ class _BookCardState extends ConsumerState<BookCard> {
           createdAt: DateTime.now(),
         );
 
-        await FirestoreService.createSwap(swap);
+        final firestoreService = ref.read(firestoreServiceProvider);
+        await firestoreService.createSwap(swap);
 
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(

@@ -6,6 +6,8 @@ import '../services/auth_service.dart';
 import '../services/storage_service.dart';
 import '../services/firestore_service.dart';
 import '../models/book_model.dart';
+import '../models/swap_model.dart';
+import '../models/chat_model.dart';
 
 // Firebase Services
 final firebaseAuthProvider = Provider<FirebaseAuth>((ref) => FirebaseAuth.instance);
@@ -48,3 +50,82 @@ final userBooksStreamProvider = StreamProvider<List<Book>>((ref) {
   
   return FirestoreService.getUserBooksStream(user.uid);
 });
+
+// Swap data providers 
+final ownerSwapsStreamProvider = StreamProvider<List<Swap>>((ref) {
+  final user = ref.watch(currentUserProvider);
+  
+  if (user == null) {
+    return Stream.value([]);
+  }
+  
+  return FirestoreService.getOwnerSwapsStream(user.uid);
+});
+
+final requesterSwapsStreamProvider = StreamProvider<List<Swap>>((ref) {
+  final user = ref.watch(currentUserProvider);
+  
+  if (user == null) {
+    return Stream.value([]);
+  }
+  
+  return FirestoreService.getRequesterSwapsStream(user.uid);
+});
+
+// Selected swap provider
+final selectedSwapProvider = Provider<Swap?>((ref) => null);
+
+// Chat data providers
+final userChatsStreamProvider = StreamProvider<List<Chat>>((ref) {
+  final user = ref.watch(currentUserProvider);
+  
+  if (user == null) {
+    return Stream.value([]);
+  }
+  
+  return FirestoreService.getUserChatsStream(user.uid);
+});
+
+final chatMessagesStreamProvider = StreamProvider.family<List<Message>, String>((ref, chatId) {
+  return FirestoreService.getChatMessagesStream(chatId);
+});
+
+// Selected chat provider
+final selectedChatProvider = StateProvider<Chat?>((ref) => null);
+
+// Chat notifier for sending messages
+class ChatNotifier extends StateNotifier<ChatState> {
+  ChatNotifier() : super(ChatState());
+
+  void setLoading(bool loading) {
+    state = state.copyWith(isLoading: loading);
+  }
+
+  void clearError() {
+    state = state.copyWith(error: null);
+  }
+}
+
+final chatNotifierProvider = StateNotifierProvider<ChatNotifier, ChatState>((ref) {
+  return ChatNotifier();
+});
+
+class ChatState {
+  final bool isLoading;
+  final String? error;
+
+  ChatState({
+    this.isLoading = false,
+    this.error,
+  });
+
+  ChatState copyWith({
+    bool? isLoading,
+    String? error,
+  }) {
+    return ChatState(
+      isLoading: isLoading ?? this.isLoading,
+      error: error ?? this.error,
+    );
+  }
+}

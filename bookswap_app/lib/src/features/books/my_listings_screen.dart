@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../core/providers/providers.dart';
 import '../../core/models/book_model.dart';
-import '../../core/services/firestore_service.dart';
 
 class MyListingsScreen extends ConsumerWidget {
   const MyListingsScreen({super.key});
@@ -79,13 +78,13 @@ class MyListingsScreen extends ConsumerWidget {
   }
 }
 
-class MyBookCard extends StatelessWidget {
+class MyBookCard extends ConsumerWidget { // Change to ConsumerWidget
   final Book book;
 
   const MyBookCard({super.key, required this.book});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) { // Add WidgetRef parameter
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Padding(
@@ -197,17 +196,20 @@ class MyBookCard extends StatelessWidget {
 
                   if (confirmed == true) {
                     try {
-                      await FirestoreService.deleteBook(book.id); // USE DIRECT STATIC CALL
+                      // Use instance method instead of static call
+                      final firestoreService = ref.read(firestoreServiceProvider);
+                      await firestoreService.deleteBook(book.id);
+                      
                       if (context.mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(content: Text('Book deleted successfully')),
-                          );
+                        );
                       }
                     } catch (e) {
                       if (context.mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(content: Text('Failed to delete book: $e')),
-                          );
+                        );
                       }
                     }
                   }
