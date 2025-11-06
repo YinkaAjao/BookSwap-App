@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/book_model.dart';
+import '../models/swap_model.dart';
 
 class FirestoreService {
   static final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -67,4 +68,80 @@ class FirestoreService {
       throw Exception('Failed to get book: $e');
     }
   }
+
+  // Swap methods
+static CollectionReference get swapsCollection => _firestore.collection('swaps');
+
+// Create a swap request
+static Future<void> createSwap(Swap swap) async {
+  try {
+    await swapsCollection.doc(swap.id).set(swap.toJson());
+    
+    // Update book availability
+    await booksCollection.doc(swap.bookId).update({
+      'isAvailable': false,
+    });
+  } catch (e) {
+    throw Exception('Failed to create swap: $e');
+  }
 }
+
+// Get swaps where user is the owner
+static Stream<List<Swap>> getOwnerSwapsStream(String userId) {
+  return swapsCollection
+      .where('ownerId', isEqualTo: userId)
+      .orderBy('createdAt', descending: true)
+      .snapshots()
+      .map((snapshot) => snapshot.docs
+          .map((doc) => Swap.fromJson(doc.data() as Map<String, dynamic>))
+          .toList());
+}
+
+// Get swaps where user is the requester
+static Stream<List<Swap>> getRequesterSwapsStream(String userId) {
+  return swapsCollection
+      .where('requesterId', isEqualTo: userId)
+      .orderBy('createdAt', descending: true)
+      .snapshots()
+      .map((snapshot) => snapshot.docs
+          .map((doc) => Swap.fromJson(doc.data() as Map<String, dynamic>))
+          .toList());
+}
+
+// Update swap status
+static Future<void> updateSwapStatus(String swapId, SwapStatus status) async {
+  try {
+    await swapsCollection.doc(swapId).update({
+      'status': status.index,
+      'updatedAt': DateTime.now().millisecondsSinceEpoch,
+    });
+
+    // If rejected, make book available again
+    if (status == SwapStatus.rejected) {
+      final swapDoc = await swapsCollection.doc(swapId).get();
+      if (swapDoc.exists) {
+        final swap = Swap.fromJson(swapDoc.data() as Map<String, dynamic>);
+        await booksCollection.doc(swap.bookId).update({
+          'isAvailable': true,
+        });
+      }
+    }
+  } catch (e) {
+    throw Exception('Failed to update swap: $e');
+  }
+}
+
+// Get a single swap by ID
+static Future<Swap?> getSwap(String swapId) async {
+  try {
+    final doc = await swapsCollection.doc(swapId).get();
+    if (doc.exists) {
+      return Swap.fromJson(doc.data() as Map<String, dynamic>);
+    }
+    return null;
+  } catch (e) {
+    throw Exception('Failed to get swap: $e');
+  }
+}
+}
+

@@ -28,6 +28,12 @@ final currentUserProvider = Provider<User?>((ref) {
   return authState.value;
 });
 
+// User ID Provider (for swap providers)
+final currentUserIdProvider = Provider<String?>((ref) {
+  final user = ref.watch(currentUserProvider);
+  return user?.uid;
+});
+
 // Book Data Providers
 final booksStreamProvider = StreamProvider<List<Book>>((ref) {
   return FirestoreService.getBooksStream();

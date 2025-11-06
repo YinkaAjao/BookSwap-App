@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../core/providers/providers.dart';
 import '../../core/models/book_model.dart';
+import '../../core/models/swap_model.dart';
+import '../../core/services/firestore_service.dart';
 
 class BrowseBooksScreen extends ConsumerWidget {
   const BrowseBooksScreen({super.key});
@@ -58,13 +60,22 @@ class BrowseBooksScreen extends ConsumerWidget {
   }
 }
 
-class BookCard extends StatelessWidget {
+class BookCard extends ConsumerStatefulWidget {
   final Book book;
 
   const BookCard({super.key, required this.book});
 
   @override
+  ConsumerState<BookCard> createState() => _BookCardState();
+}
+
+class _BookCardState extends ConsumerState<BookCard> {
+  bool _isLoading = false;
+
+  @override
   Widget build(BuildContext context) {
+    final currentUser = ref.watch(currentUserProvider);
+    
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Padding(
@@ -80,11 +91,11 @@ class BookCard extends StatelessWidget {
                 borderRadius: BorderRadius.circular(8),
                 color: Colors.grey[200],
               ),
-              child: book.imageUrl.isNotEmpty
+              child: widget.book.imageUrl.isNotEmpty
                   ? ClipRRect(
                       borderRadius: BorderRadius.circular(8),
                       child: CachedNetworkImage(
-                        imageUrl: book.imageUrl,
+                        imageUrl: widget.book.imageUrl,
                         fit: BoxFit.cover,
                         placeholder: (context, url) => const Center(
                           child: CircularProgressIndicator(),
@@ -101,14 +112,14 @@ class BookCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    book.title,
+                    widget.book.title,
                     style: Theme.of(context).textTheme.titleMedium,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    'by ${book.author}',
+                    'by ${widget.book.author}',
                     style: Theme.of(context).textTheme.bodyMedium,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -123,7 +134,7 @@ class BookCard extends StatelessWidget {
                           borderRadius: BorderRadius.circular(4),
                         ),
                         child: Text(
-                          book.conditionText,
+                          widget.book.conditionText,
                           style: Theme.of(context).textTheme.labelSmall?.copyWith(
                                 color: Colors.blue[800],
                               ),
@@ -131,7 +142,7 @@ class BookCard extends StatelessWidget {
                       ),
                       const Spacer(),
                       Text(
-                        'by ${book.ownerName}',
+                        'by ${widget.book.ownerName}',
                         style: Theme.of(context).textTheme.bodySmall,
                       ),
                     ],
@@ -140,10 +151,23 @@ class BookCard extends StatelessWidget {
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
-                      onPressed: () {
-                        // Implement swap functionality
-                      },
-                      child: const Text('Swap'),
+                      onPressed: (currentUser?.uid == widget.book.ownerId || 
+                                 !widget.book.isAvailable || _isLoading)
+                          ? null
+                          : () => _initiateSwap(widget.book),
+                      child: _isLoading
+                          ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : Text(
+                              currentUser?.uid == widget.book.ownerId
+                                  ? 'Your Book'
+                                  : !widget.book.isAvailable
+                                      ? 'Unavailable'
+                                      : 'Swap',
+                            ),
                     ),
                   ),
                 ],
@@ -153,5 +177,82 @@ class BookCard extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  Future<void> _initiateSwap(Book book) async {
+    if (_isLoading) return;
+    
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final currentUser = ref.read(currentUserProvider);
+      if (currentUser == null) return;
+
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Initiate Swap'),
+          content: Text('Are you sure you want to request a swap for "${book.title}"?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('Request Swap'),
+            ),
+          ],
+        ),
+      );
+
+      if (confirmed == true && mounted) {
+        final swap = Swap(
+          id: 'swap_${DateTime.now().millisecondsSinceEpoch}',
+          bookId: book.id,
+          bookTitle: book.title,
+          bookImageUrl: book.imageUrl,
+          ownerId: book.ownerId,
+          ownerName: book.ownerName,
+          requesterId: currentUser.uid,
+          requesterName: currentUser.displayName ?? currentUser.email!.split('@')[0],
+          status: SwapStatus.pending,
+          createdAt: DateTime.now(),
+        );
+
+        await FirestoreService.createSwap(swap);
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Swap request sent successfully!'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        }
+
+        // Refresh books to update availability
+        ref.invalidate(booksStreamProvider);
+        ref.invalidate(userBooksStreamProvider);
+        // The swaps will refresh automatically due to stream nature
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to initiate swap: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
   }
 }

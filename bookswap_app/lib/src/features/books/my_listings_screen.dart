@@ -198,13 +198,17 @@ class MyBookCard extends StatelessWidget {
                   if (confirmed == true) {
                     try {
                       await FirestoreService.deleteBook(book.id); // USE DIRECT STATIC CALL
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Book deleted successfully')),
-                      );
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Book deleted successfully')),
+                          );
+                      }
                     } catch (e) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Failed to delete book: $e')),
-                      );
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Failed to delete book: $e')),
+                          );
+                      }
                     }
                   }
                 }
