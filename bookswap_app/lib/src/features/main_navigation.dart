@@ -1,60 +1,89 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/providers/providers.dart';
+import 'books/browse_books_screen.dart';
+import 'books/my_listings_screen.dart';
+import 'auth/login_screen.dart';
 
-class MainNavigation extends ConsumerWidget {
+class MainNavigation extends ConsumerStatefulWidget {
   const MainNavigation({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final authState = ref.watch(authStateProvider);
-    
+  ConsumerState<MainNavigation> createState() => _MainNavigationState();
+}
+
+class _MainNavigationState extends ConsumerState<MainNavigation> {
+  int _currentIndex = 0;
+
+  final List<Widget> _screens = [
+    const BrowseBooksScreen(),
+    const MyListingsScreen(),
+    const PlaceholderWidget(title: 'Chats'),
+    const PlaceholderWidget(title: 'Settings'),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    final user = ref.watch(currentUserProvider);
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('BookSwap'),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: () => ref.read(authServiceProvider).signOut(),
+          if (user != null) ...[
+            IconButton(
+              icon: const Icon(Icons.logout),
+              onPressed: () => ref.read(authServiceProvider).signOut(),
+            ),
+          ],
+        ],
+      ),
+      body: _screens[_currentIndex],
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: _currentIndex,
+        onTap: (index) => setState(() => _currentIndex = index),
+        type: BottomNavigationBarType.fixed,
+        items: const [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.explore),
+            label: 'Browse',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.library_books),
+            label: 'My Listings',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.chat),
+            label: 'Chats',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.settings),
+            label: 'Settings',
           ),
         ],
       ),
-      body: authState.when(
-        data: (user) => Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                'Welcome to BookSwap!',
-                style: Theme.of(context).textTheme.headlineMedium,
-              ),
-              const SizedBox(height: 16),
-              if (user != null) ...[
-                Text('Logged in as: ${user.email}'),
-                Text('Display Name: ${user.displayName ?? 'N/A'}'),
-                Text('Email Verified: ${user.emailVerified}'),
-              ],
-              const SizedBox(height: 32),
-              ElevatedButton(
-                onPressed: () {
-                  if (user != null && !user.emailVerified) {
-                    ref.read(authServiceProvider).sendEmailVerification();
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Verification email sent!'),
-                      ),
-                    );
-                  }
-                },
-                child: const Text('Resend Verification Email'),
-              ),
-            ],
+    );
+  }
+}
+
+class PlaceholderWidget extends StatelessWidget {
+  final String title;
+
+  const PlaceholderWidget({super.key, required this.title});
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(
+            '$title Screen',
+            style: Theme.of(context).textTheme.headlineMedium,
           ),
-        ),
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, stack) => Center(
-          child: Text('Error: $error'),
-        ),
+          const SizedBox(height: 16),
+          const Text('This feature is coming soon!'),
+        ],
       ),
     );
   }

@@ -1,0 +1,70 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import '../models/book_model.dart';
+
+class FirestoreService {
+  static final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+
+  // Collection references
+  static CollectionReference get booksCollection => _firestore.collection('books');
+
+  // Create a new book listing
+  static Future<void> createBook(Book book) async {
+    try {
+      await booksCollection.doc(book.id).set(book.toJson());
+    } catch (e) {
+      throw Exception('Failed to create book: $e');
+    }
+  }
+
+  // Get all books (for browse screen)
+  static Stream<List<Book>> getBooksStream() {
+    return booksCollection
+        .orderBy('createdAt', descending: true)
+        .snapshots()
+        .map((snapshot) => snapshot.docs
+            .map((doc) => Book.fromJson(doc.data() as Map<String, dynamic>))
+            .toList());
+  }
+
+  // Get user's books
+  static Stream<List<Book>> getUserBooksStream(String userId) {
+    return booksCollection
+        .where('ownerId', isEqualTo: userId)
+        .orderBy('createdAt', descending: true)
+        .snapshots()
+        .map((snapshot) => snapshot.docs
+            .map((doc) => Book.fromJson(doc.data() as Map<String, dynamic>))
+            .toList());
+  }
+
+  // Update a book
+  static Future<void> updateBook(Book book) async {
+    try {
+      await booksCollection.doc(book.id).update(book.toJson());
+    } catch (e) {
+      throw Exception('Failed to update book: $e');
+    }
+  }
+
+  // Delete a book
+  static Future<void> deleteBook(String bookId) async {
+    try {
+      await booksCollection.doc(bookId).delete();
+    } catch (e) {
+      throw Exception('Failed to delete book: $e');
+    }
+  }
+
+  // Get a single book by ID
+  static Future<Book?> getBook(String bookId) async {
+    try {
+      final doc = await booksCollection.doc(bookId).get();
+      if (doc.exists) {
+        return Book.fromJson(doc.data() as Map<String, dynamic>);
+      }
+      return null;
+    } catch (e) {
+      throw Exception('Failed to get book: $e');
+    }
+  }
+}
