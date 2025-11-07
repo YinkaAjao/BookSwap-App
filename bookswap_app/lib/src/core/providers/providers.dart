@@ -19,6 +19,9 @@ final authServiceProvider = Provider<AuthService>((ref) => AuthService());
 final storageServiceProvider = Provider<StorageService>((ref) {
   return StorageService(ref.watch(storageProvider));
 });
+final firestoreServiceProvider = Provider<FirestoreService>((ref) {
+  return FirestoreService();
+});
 
 // Auth State Providers
 final authStateProvider = StreamProvider<User?>((ref) {
@@ -38,38 +41,42 @@ final currentUserIdProvider = Provider<String?>((ref) {
 
 // Book Data Providers
 final booksStreamProvider = StreamProvider<List<Book>>((ref) {
-  return FirestoreService.getBooksStream();
+  final firestoreService = ref.watch(firestoreServiceProvider);
+  return firestoreService.getBooksStream();
 });
 
 final userBooksStreamProvider = StreamProvider<List<Book>>((ref) {
   final user = ref.watch(currentUserProvider);
+  final firestoreService = ref.watch(firestoreServiceProvider);
   
   if (user == null) {
     return Stream.value([]);
   }
   
-  return FirestoreService.getUserBooksStream(user.uid);
+  return firestoreService.getUserBooksStream(user.uid);
 });
 
 // Swap data providers 
 final ownerSwapsStreamProvider = StreamProvider<List<Swap>>((ref) {
   final user = ref.watch(currentUserProvider);
+  final firestoreService = ref.watch(firestoreServiceProvider);
   
   if (user == null) {
     return Stream.value([]);
   }
   
-  return FirestoreService.getOwnerSwapsStream(user.uid);
+  return firestoreService.getOwnerSwapsStream(user.uid);
 });
 
 final requesterSwapsStreamProvider = StreamProvider<List<Swap>>((ref) {
   final user = ref.watch(currentUserProvider);
+  final firestoreService = ref.watch(firestoreServiceProvider);
   
   if (user == null) {
     return Stream.value([]);
   }
   
-  return FirestoreService.getRequesterSwapsStream(user.uid);
+  return firestoreService.getRequesterSwapsStream(user.uid);
 });
 
 // Selected swap provider
@@ -78,54 +85,56 @@ final selectedSwapProvider = Provider<Swap?>((ref) => null);
 // Chat data providers
 final userChatsStreamProvider = StreamProvider<List<Chat>>((ref) {
   final user = ref.watch(currentUserProvider);
+  final firestoreService = ref.watch(firestoreServiceProvider);
   
   if (user == null) {
     return Stream.value([]);
   }
   
-  return FirestoreService.getUserChatsStream(user.uid);
+  return firestoreService.getUserChatsStream(user.uid);
 });
 
 final chatMessagesStreamProvider = StreamProvider.family<List<Message>, String>((ref, chatId) {
-  return FirestoreService.getChatMessagesStream(chatId);
+  final firestoreService = ref.watch(firestoreServiceProvider);
+  return firestoreService.getChatMessagesStream(chatId);
 });
 
-// Selected chat provider
-final selectedChatProvider = StateProvider<Chat?>((ref) => null);
+// Simple state providers using NotifierProvider for Riverpod 3.0
+final selectedChatProvider = NotifierProvider<SelectedChatNotifier, Chat?>(SelectedChatNotifier.new);
 
-// Chat notifier for sending messages
-class ChatNotifier extends StateNotifier<ChatState> {
-  ChatNotifier() : super(ChatState());
-
-  void setLoading(bool loading) {
-    state = state.copyWith(isLoading: loading);
+class SelectedChatNotifier extends Notifier<Chat?> {
+  @override
+  Chat? build() {
+    return null;
   }
 
-  void clearError() {
-    state = state.copyWith(error: null);
+  void setChat(Chat? chat) {
+    state = chat;
   }
 }
 
-final chatNotifierProvider = StateNotifierProvider<ChatNotifier, ChatState>((ref) {
-  return ChatNotifier();
-});
+final chatLoadingProvider = NotifierProvider<ChatLoadingNotifier, bool>(ChatLoadingNotifier.new);
 
-class ChatState {
-  final bool isLoading;
-  final String? error;
+class ChatLoadingNotifier extends Notifier<bool> {
+  @override
+  bool build() {
+    return false;
+  }
 
-  ChatState({
-    this.isLoading = false,
-    this.error,
-  });
+  void setLoading(bool loading) {
+    state = loading;
+  }
+}
 
-  ChatState copyWith({
-    bool? isLoading,
-    String? error,
-  }) {
-    return ChatState(
-      isLoading: isLoading ?? this.isLoading,
-      error: error ?? this.error,
-    );
+final chatErrorProvider = NotifierProvider<ChatErrorNotifier, String?>(ChatErrorNotifier.new);
+
+class ChatErrorNotifier extends Notifier<String?> {
+  @override
+  String? build() {
+    return null;
+  }
+
+  void setError(String? error) {
+    state = error;
   }
 }
