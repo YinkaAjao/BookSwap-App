@@ -1,5 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
-import '../exceptions/auth_exception.dart'; // This import is now used
+import '../exceptions/auth_exception.dart';
 
 class AuthService {
   final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
@@ -22,6 +22,10 @@ class AuthService {
         return 'Password should be at least 6 characters.';
       case 'network-request-failed':
         return 'Network error. Please check your connection.';
+      case 'user-disabled':
+        return 'This account has been disabled.';
+      case 'too-many-requests':
+        return 'Too many attempts. Please try again later.';
       default:
         return e.message ?? 'An unexpected error occurred.';
     }
@@ -35,19 +39,21 @@ class AuthService {
   }) async {
     try {
       final userCredential = await _firebaseAuth.createUserWithEmailAndPassword(
-        email: email,
+        email: email.trim(),
         password: password,
       );
       
       // Update display name
-      await userCredential.user!.updateDisplayName(displayName);
-      
-      // Send email verification
-      await userCredential.user!.sendEmailVerification();
+      if (userCredential.user != null) {
+        await userCredential.user!.updateDisplayName(displayName);
+        await userCredential.user!.sendEmailVerification();
+      }
       
       return userCredential.user;
     } on FirebaseAuthException catch (e) {
       throw AuthException(e.code, _getFriendlyMessage(e));
+    } catch (e) {
+      throw AuthException('unknown-error', 'An unexpected error occurred: $e');
     }
   }
 
@@ -58,19 +64,29 @@ class AuthService {
   }) async {
     try {
       final userCredential = await _firebaseAuth.signInWithEmailAndPassword(
-        email: email,
+        email: email.trim(),
         password: password,
       );
       
       // Check if email is verified
-      if (!userCredential.user!.emailVerified) {
-        await signOut();
+      if (userCredential.user != null && !userCredential.user!.emailVerified) {
+        await _firebaseAuth.signOut();
         throw AuthException('email-not-verified', 'Please verify your email before signing in.');
       }
       
       return userCredential.user;
     } on FirebaseAuthException catch (e) {
-      throw AuthException(e.code, _getFriendlyMessage(e));
+      // Provide more specific error messages
+      String friendlyMessage = _getFriendlyMessage(e);
+      
+      // For invalid login, be more generic for security
+      if (e.code == 'user-not-found' || e.code == 'wrong-password') {
+        friendlyMessage = 'Invalid email or password. Please try again.';
+      }
+      
+      throw AuthException(e.code, friendlyMessage);
+    } catch (e) {
+      throw AuthException('unknown-error', 'Failed to sign in. Please try again.');
     }
   }
 
