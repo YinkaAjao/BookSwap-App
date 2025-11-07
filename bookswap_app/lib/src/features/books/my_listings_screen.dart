@@ -9,7 +9,7 @@ class MyListingsScreen extends ConsumerWidget {
   const MyListingsScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {  // Add WidgetRef parameter
+  Widget build(BuildContext context, WidgetRef ref) {
     final userBooksAsync = ref.watch(userBooksStreamProvider);
 
     return Scaffold(
@@ -30,20 +30,36 @@ class MyListingsScreen extends ConsumerWidget {
         ],
       ),
       body: userBooksAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, stack) => Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Text('Error loading your books'),
-              Text(error.toString()),
-              ElevatedButton(
-                onPressed: () => ref.invalidate(userBooksStreamProvider),
-                child: const Text('Retry'),
-              ),
-            ],
-          ),
+        loading: () => const Center(
+          child: CircularProgressIndicator(),
         ),
+        error: (error, stack) {
+          print('Error loading user books: $error');
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.error_outline, size: 64, color: Colors.red),
+                const SizedBox(height: 16),
+                const Text(
+                  'Error loading your books',
+                  style: TextStyle(fontSize: 18),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  error.toString(),
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(color: Colors.grey),
+                ),
+                const SizedBox(height: 16),
+                ElevatedButton(
+                  onPressed: () => ref.invalidate(userBooksStreamProvider),
+                  child: const Text('Retry'),
+                ),
+              ],
+            ),
+          );
+        },
         data: (books) {
           if (books.isEmpty) {
             return Center(
@@ -95,7 +111,7 @@ class MyBookCard extends ConsumerWidget {
   const MyBookCard({super.key, required this.book});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {  // Add WidgetRef parameter
+  Widget build(BuildContext context, WidgetRef ref) {
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Padding(
@@ -117,10 +133,11 @@ class MyBookCard extends ConsumerWidget {
                       child: CachedNetworkImage(
                         imageUrl: book.imageUrl,
                         fit: BoxFit.cover,
-                        placeholder: (context, url) => const Center(
-                          child: CircularProgressIndicator(),
+                        placeholder: (context, url) => Container(
+                          color: Colors.grey[200],
+                          child: const Icon(Icons.book, size: 30, color: Colors.grey),
                         ),
-                        errorWidget: (context, url, error) => const Icon(Icons.book),
+                        errorWidget: (context, url, error) => const Icon(Icons.book, size: 30, color: Colors.grey),
                       ),
                     )
                   : const Icon(Icons.book, size: 30, color: Colors.grey),
@@ -185,7 +202,6 @@ class MyBookCard extends ConsumerWidget {
               ],
               onSelected: (value) async {
                 if (value == 'edit') {
-                  // Navigate to edit screen - you can implement this later
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(content: Text('Edit feature coming soon!')),
                   );
@@ -210,7 +226,6 @@ class MyBookCard extends ConsumerWidget {
 
                   if (confirmed == true) {
                     try {
-                      // Use instance method instead of static call
                       final firestoreService = ref.read(firestoreServiceProvider);
                       await firestoreService.deleteBook(book.id);
                       

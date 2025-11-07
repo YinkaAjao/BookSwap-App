@@ -8,29 +8,62 @@ class ChatsScreen extends ConsumerWidget {
   const ChatsScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {  // Add WidgetRef parameter
-    final userChatsAsync = ref.watch(userChatsStreamProvider);
+  Widget build(BuildContext context, WidgetRef ref) {
     final currentUser = ref.watch(currentUserProvider);
+    final userChatsAsync = ref.watch(userChatsStreamProvider);
+
+    // Check if user is logged in
+    if (currentUser == null) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Chats')),
+        body: const Center(
+          child: Text('Please sign in to view your chats'),
+        ),
+      );
+    }
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Chats'),
       ),
       body: userChatsAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, stack) => Center(
+        loading: () => const Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Text('Error loading chats'),
-              Text(error.toString()),
-              ElevatedButton(
-                onPressed: () => ref.invalidate(userChatsStreamProvider),
-                child: const Text('Retry'),
-              ),
+              CircularProgressIndicator(),
+              SizedBox(height: 16),
+              Text('Loading your chats...'),
             ],
           ),
         ),
+        error: (error, stack) {
+          print('Error loading user chats: $error');
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.error_outline, size: 64, color: Colors.red),
+                const SizedBox(height: 16),
+                const Text(
+                  'Error loading chats',
+                  style: TextStyle(fontSize: 18),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  error.toString(),
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(color: Colors.grey),
+                ),
+                const SizedBox(height: 16),
+                ElevatedButton(
+                  onPressed: () => ref.invalidate(userChatsStreamProvider),
+                  child: const Text('Retry'),
+                ),
+              ],
+            ),
+          );
+        },
         data: (chats) {
           if (chats.isEmpty) {
             return Center(
@@ -44,7 +77,10 @@ class ChatsScreen extends ConsumerWidget {
                     style: TextStyle(fontSize: 18),
                   ),
                   const SizedBox(height: 8),
-                  const Text('Start a swap to begin chatting!'),
+                  const Text(
+                    'Start a swap to begin chatting!',
+                    textAlign: TextAlign.center,
+                  ),
                 ],
               ),
             );
@@ -54,14 +90,12 @@ class ChatsScreen extends ConsumerWidget {
             itemCount: chats.length,
             itemBuilder: (context, index) {
               final chat = chats[index];
-              final otherUserName = chat.getOtherParticipantName(currentUser?.uid ?? '');
+              final otherUserName = chat.getOtherParticipantName(currentUser.uid);
               
               return ChatListItem(
                 chat: chat,
                 otherUserName: otherUserName,
                 onTap: () {
-                  // FIXED: Use the correct method to set the selected chat
-                  ref.read(selectedChatProvider.notifier).setChat(chat);
                   Navigator.push(
                     context,
                     MaterialPageRoute(

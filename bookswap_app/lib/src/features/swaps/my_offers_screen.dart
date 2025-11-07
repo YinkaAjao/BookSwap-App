@@ -9,28 +9,62 @@ class MyOffersScreen extends ConsumerWidget {
   const MyOffersScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {  // Add WidgetRef parameter
+  Widget build(BuildContext context, WidgetRef ref) {
+    final currentUser = ref.watch(currentUserProvider);
     final requesterSwapsAsync = ref.watch(requesterSwapsStreamProvider);
+
+    // Check if user is logged in
+    if (currentUser == null) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('My Offers')),
+        body: const Center(
+          child: Text('Please sign in to view your offers'),
+        ),
+      );
+    }
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('My Offers'),
       ),
       body: requesterSwapsAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, stack) => Center(
+        loading: () => const Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Text('Error loading your offers'),
-              Text(error.toString()),
-              ElevatedButton(
-                onPressed: () => ref.invalidate(requesterSwapsStreamProvider),
-                child: const Text('Retry'),
-              ),
+              CircularProgressIndicator(),
+              SizedBox(height: 16),
+              Text('Loading your offers...'),
             ],
           ),
         ),
+        error: (error, stack) {
+          print('Error loading requester swaps: $error');
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.error_outline, size: 64, color: Colors.red),
+                const SizedBox(height: 16),
+                const Text(
+                  'Error loading your offers',
+                  style: TextStyle(fontSize: 18),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  error.toString(),
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(color: Colors.grey),
+                ),
+                const SizedBox(height: 16),
+                ElevatedButton(
+                  onPressed: () => ref.invalidate(requesterSwapsStreamProvider),
+                  child: const Text('Retry'),
+                ),
+              ],
+            ),
+          );
+        },
         data: (swaps) {
           if (swaps.isEmpty) {
             return Center(
@@ -44,7 +78,10 @@ class MyOffersScreen extends ConsumerWidget {
                     style: TextStyle(fontSize: 18),
                   ),
                   const SizedBox(height: 8),
-                  const Text('Browse books and make your first swap offer!'),
+                  const Text(
+                    'Browse books and make your first swap offer!',
+                    textAlign: TextAlign.center,
+                  ),
                 ],
               ),
             );
