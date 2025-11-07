@@ -1,32 +1,13 @@
 {
   "project_info": {
-    "project_number": "394505151867",
-    "project_id": "bookswap-c7bdb",
-    "storage_bucket": "bookswap-c7bdb.firebasestorage.app"
+    "project_number": "270102586366",
+    "project_id": "bookswap-cf2f2",
+    "storage_bucket": "bookswap-cf2f2.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:394505151867:android:81422bb6b447c2f4b4c9de",
-        "android_client_info": {
-          "package_name": "com.YinkaAjao.bookswap"
-        }
-      },
-      "oauth_client": [],
-      "api_key": [
-        {
-          "current_key": "AIzaSyD5ZuYvfhO7As6oZu7ULv6xzu6yiFnuF4k"
-        }
-      ],
-      "services": {
-        "appinvite_service": {
-          "other_platform_oauth_client": []
-        }
-      }
-    },
-    {
-      "client_info": {
-        "mobilesdk_app_id": "1:394505151867:android:15932210b24e4c07b4c9de",
+        "mobilesdk_app_id": "1:270102586366:android:a8e9c2e40fc4f5ca1a96af",
         "android_client_info": {
           "package_name": "com.example.bookswap_app"
         }
@@ -34,7 +15,7 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyD5ZuYvfhO7As6oZu7ULv6xzu6yiFnuF4k"
+          "current_key": "AIzaSyDF9Cr-y8V1aXEey2wrevpdVZR13IQiA74"
         }
       ],
       "services": {

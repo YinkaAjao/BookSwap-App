@@ -2,6 +2,58 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/providers/providers.dart';
 
+// Create a provider for notification settings
+final notificationSettingsProvider = NotifierProvider<NotificationSettingsNotifier, NotificationSettings>(() {
+  return NotificationSettingsNotifier();
+});
+
+class NotificationSettings {
+  final bool swapNotifications;
+  final bool chatNotifications;
+
+  NotificationSettings({
+    required this.swapNotifications,
+    required this.chatNotifications,
+  });
+
+  NotificationSettings copyWith({
+    bool? swapNotifications,
+    bool? chatNotifications,
+  }) {
+    return NotificationSettings(
+      swapNotifications: swapNotifications ?? this.swapNotifications,
+      chatNotifications: chatNotifications ?? this.chatNotifications,
+    );
+  }
+}
+
+class NotificationSettingsNotifier extends Notifier<NotificationSettings> {
+  @override
+  NotificationSettings build() {
+    // Default values for notification settings
+    return NotificationSettings(
+      swapNotifications: true,
+      chatNotifications: true,
+    );
+  }
+
+  void toggleSwapNotifications() {
+    state = state.copyWith(swapNotifications: !state.swapNotifications);
+  }
+
+  void toggleChatNotifications() {
+    state = state.copyWith(chatNotifications: !state.chatNotifications);
+  }
+
+  void setSwapNotifications(bool value) {
+    state = state.copyWith(swapNotifications: value);
+  }
+
+  void setChatNotifications(bool value) {
+    state = state.copyWith(chatNotifications: value);
+  }
+}
+
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
 
@@ -9,6 +61,7 @@ class SettingsScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(currentUserProvider);
     final authService = ref.read(authServiceProvider);
+    final notificationSettings = ref.watch(notificationSettingsProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -90,17 +143,33 @@ class SettingsScreen extends ConsumerWidget {
                         SwitchListTile(
                           title: const Text('Swap Notifications'),
                           subtitle: const Text('Get notified when someone requests a swap'),
-                          value: true,
+                          value: notificationSettings.swapNotifications,
                           onChanged: (value) {
-                            // Implement notification toggle
+                            ref.read(notificationSettingsProvider.notifier).setSwapNotifications(value);
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(value 
+                                    ? 'Swap notifications enabled' 
+                                    : 'Swap notifications disabled'),
+                                duration: const Duration(seconds: 2),
+                              ),
+                            );
                           },
                         ),
                         SwitchListTile(
                           title: const Text('Chat Notifications'),
                           subtitle: const Text('Get notified for new messages'),
-                          value: true,
+                          value: notificationSettings.chatNotifications,
                           onChanged: (value) {
-                            // Implement notification toggle
+                            ref.read(notificationSettingsProvider.notifier).setChatNotifications(value);
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(value 
+                                    ? 'Chat notifications enabled' 
+                                    : 'Chat notifications disabled'),
+                                duration: const Duration(seconds: 2),
+                              ),
+                            );
                           },
                         ),
                       ],

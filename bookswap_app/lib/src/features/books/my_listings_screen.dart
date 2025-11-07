@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../core/providers/providers.dart';
 import '../../core/models/book_model.dart';
+import 'add_book_screen.dart'; // Add this import
 
 class MyListingsScreen extends ConsumerWidget {
   const MyListingsScreen({super.key});
@@ -19,6 +20,12 @@ class MyListingsScreen extends ConsumerWidget {
             icon: const Icon(Icons.add),
             onPressed: () {
               // Navigate to add book screen
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const AddBookScreen(),
+                ),
+              );
             },
           ),
         ],
@@ -55,7 +62,12 @@ class MyListingsScreen extends ConsumerWidget {
                   const SizedBox(height: 24),
                   ElevatedButton.icon(
                     onPressed: () {
-                      // Navigate to add book screen
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const AddBookScreen(),
+                        ),
+                      );
                     },
                     icon: const Icon(Icons.add),
                     label: const Text('Add Your First Book'),
@@ -78,13 +90,13 @@ class MyListingsScreen extends ConsumerWidget {
   }
 }
 
-class MyBookCard extends ConsumerWidget { // Change to ConsumerWidget
+class MyBookCard extends ConsumerWidget {
   final Book book;
 
   const MyBookCard({super.key, required this.book});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) { // Add WidgetRef parameter
+  Widget build(BuildContext context, WidgetRef ref) {
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Padding(
@@ -174,7 +186,10 @@ class MyBookCard extends ConsumerWidget { // Change to ConsumerWidget
               ],
               onSelected: (value) async {
                 if (value == 'edit') {
-                  // Navigate to edit screen
+                  // Navigate to edit screen - you can implement this later
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Edit feature coming soon!')),
+                  );
                 } else if (value == 'delete') {
                   final confirmed = await showDialog<bool>(
                     context: context,

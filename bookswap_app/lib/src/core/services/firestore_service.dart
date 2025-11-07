@@ -10,13 +10,30 @@ class FirestoreService {
   CollectionReference get booksCollection => _firestore.collection('books');
   CollectionReference get swapsCollection => _firestore.collection('swaps');
   CollectionReference get chatsCollection => _firestore.collection('chats');
-  CollectionReference get messagesCollection => _firestore.collection('messages');
+  CollectionReference get messagesCollection =>
+      _firestore.collection('messages');
 
   // Create a new book listing
   Future<void> createBook(Book book) async {
     try {
+      print('Creating book: ${book.title} for user: ${book.ownerId}');
+
+      // Validate book data
+      if (book.id.isEmpty) {
+        throw Exception('Book ID cannot be empty');
+      }
+      if (book.title.isEmpty) {
+        throw Exception('Book title cannot be empty');
+      }
+      if (book.ownerId.isEmpty) {
+        throw Exception('Owner ID cannot be empty');
+      }
+
       await booksCollection.doc(book.id).set(book.toJson());
+      print('Book created successfully: ${book.id}');
     } catch (e) {
+      print('Failed to create book: $e');
+      print('Book data: ${book.toJson()}');
       throw Exception('Failed to create book: $e');
     }
   }
@@ -26,9 +43,11 @@ class FirestoreService {
     return booksCollection
         .orderBy('createdAt', descending: true)
         .snapshots()
-        .map((snapshot) => snapshot.docs
-            .map((doc) => Book.fromJson(doc.data() as Map<String, dynamic>))
-            .toList());
+        .map(
+          (snapshot) => snapshot.docs
+              .map((doc) => Book.fromJson(doc.data() as Map<String, dynamic>))
+              .toList(),
+        );
   }
 
   // Get user's books
@@ -37,9 +56,11 @@ class FirestoreService {
         .where('ownerId', isEqualTo: userId)
         .orderBy('createdAt', descending: true)
         .snapshots()
-        .map((snapshot) => snapshot.docs
-            .map((doc) => Book.fromJson(doc.data() as Map<String, dynamic>))
-            .toList());
+        .map(
+          (snapshot) => snapshot.docs
+              .map((doc) => Book.fromJson(doc.data() as Map<String, dynamic>))
+              .toList(),
+        );
   }
 
   // Update a book
@@ -77,11 +98,9 @@ class FirestoreService {
   Future<void> createSwap(Swap swap) async {
     try {
       await swapsCollection.doc(swap.id).set(swap.toJson());
-      
+
       // Update book availability
-      await booksCollection.doc(swap.bookId).update({
-        'isAvailable': false,
-      });
+      await booksCollection.doc(swap.bookId).update({'isAvailable': false});
     } catch (e) {
       throw Exception('Failed to create swap: $e');
     }
@@ -93,9 +112,11 @@ class FirestoreService {
         .where('ownerId', isEqualTo: userId)
         .orderBy('createdAt', descending: true)
         .snapshots()
-        .map((snapshot) => snapshot.docs
-            .map((doc) => Swap.fromJson(doc.data() as Map<String, dynamic>))
-            .toList());
+        .map(
+          (snapshot) => snapshot.docs
+              .map((doc) => Swap.fromJson(doc.data() as Map<String, dynamic>))
+              .toList(),
+        );
   }
 
   // Get swaps where user is the requester
@@ -104,9 +125,11 @@ class FirestoreService {
         .where('requesterId', isEqualTo: userId)
         .orderBy('createdAt', descending: true)
         .snapshots()
-        .map((snapshot) => snapshot.docs
-            .map((doc) => Swap.fromJson(doc.data() as Map<String, dynamic>))
-            .toList());
+        .map(
+          (snapshot) => snapshot.docs
+              .map((doc) => Swap.fromJson(doc.data() as Map<String, dynamic>))
+              .toList(),
+        );
   }
 
   // Update swap status
@@ -122,9 +145,7 @@ class FirestoreService {
         final swapDoc = await swapsCollection.doc(swapId).get();
         if (swapDoc.exists) {
           final swap = Swap.fromJson(swapDoc.data() as Map<String, dynamic>);
-          await booksCollection.doc(swap.bookId).update({
-            'isAvailable': true,
-          });
+          await booksCollection.doc(swap.bookId).update({'isAvailable': true});
         }
       }
     } catch (e) {
@@ -146,7 +167,11 @@ class FirestoreService {
   }
 
   // Chat methods
-  Future<Chat> getOrCreateChat(String swapId, List<String> participantIds, List<String> participantNames) async {
+  Future<Chat> getOrCreateChat(
+    String swapId,
+    List<String> participantIds,
+    List<String> participantNames,
+  ) async {
     try {
       // Check if chat already exists for this swap
       final existingChats = await chatsCollection
@@ -155,7 +180,9 @@ class FirestoreService {
           .get();
 
       if (existingChats.docs.isNotEmpty) {
-        return Chat.fromJson(existingChats.docs.first.data() as Map<String, dynamic>);
+        return Chat.fromJson(
+          existingChats.docs.first.data() as Map<String, dynamic>,
+        );
       }
 
       // Create new chat
@@ -179,9 +206,11 @@ class FirestoreService {
         .where('participantIds', arrayContains: userId)
         .orderBy('lastMessageAt', descending: true)
         .snapshots()
-        .map((snapshot) => snapshot.docs
-            .map((doc) => Chat.fromJson(doc.data() as Map<String, dynamic>))
-            .toList());
+        .map(
+          (snapshot) => snapshot.docs
+              .map((doc) => Chat.fromJson(doc.data() as Map<String, dynamic>))
+              .toList(),
+        );
   }
 
   Stream<List<Message>> getChatMessagesStream(String chatId) {
@@ -189,16 +218,20 @@ class FirestoreService {
         .where('chatId', isEqualTo: chatId)
         .orderBy('timestamp', descending: false)
         .snapshots()
-        .map((snapshot) => snapshot.docs
-            .map((doc) => Message.fromJson(doc.data() as Map<String, dynamic>))
-            .toList());
+        .map(
+          (snapshot) => snapshot.docs
+              .map(
+                (doc) => Message.fromJson(doc.data() as Map<String, dynamic>),
+              )
+              .toList(),
+        );
   }
 
   Future<void> sendMessage(Message message) async {
     try {
       // Add message to messages collection
       await messagesCollection.doc(message.id).set(message.toJson());
-      
+
       // Update chat's last message and timestamp
       await chatsCollection.doc(message.chatId).update({
         'lastMessage': message.text,
@@ -221,7 +254,7 @@ class FirestoreService {
       for (final doc in unreadMessages.docs) {
         batch.update(doc.reference, {'isRead': true});
       }
-      
+
       await batch.commit();
     } catch (e) {
       throw Exception('Failed to mark messages as read: $e');

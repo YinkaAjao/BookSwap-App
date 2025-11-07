@@ -15,6 +15,7 @@ class BookSwapApp extends ConsumerWidget {
         primarySwatch: Colors.blue,
         useMaterial3: true,
       ),
+      debugShowCheckedModeBanner: false, // This removes the debug banner
       home: ref.watch(authStateProvider).when(
         data: (user) {
           if (user != null) {

@@ -4,6 +4,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import '../../core/providers/providers.dart';
 import '../../core/models/book_model.dart';
 import '../../core/models/swap_model.dart';
+import 'add_book_screen.dart'; // Add this import
 
 class BrowseBooksScreen extends ConsumerWidget {
   const BrowseBooksScreen({super.key});
@@ -19,7 +20,13 @@ class BrowseBooksScreen extends ConsumerWidget {
           IconButton(
             icon: const Icon(Icons.add),
             onPressed: () {
-              // Navigate to add book screen (we'll create this next)
+              // Navigate to add book screen
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const AddBookScreen(),
+                ),
+              );
             },
           ),
         ],
@@ -41,8 +48,33 @@ class BrowseBooksScreen extends ConsumerWidget {
         ),
         data: (books) {
           if (books.isEmpty) {
-            return const Center(
-              child: Text('No books available yet. Be the first to list one!'),
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.library_books, size: 64, color: Colors.grey),
+                  const SizedBox(height: 16),
+                  const Text(
+                    'No books available yet',
+                    style: TextStyle(fontSize: 18),
+                  ),
+                  const SizedBox(height: 8),
+                  const Text('Be the first to list a book!'),
+                  const SizedBox(height: 24),
+                  ElevatedButton.icon(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const AddBookScreen(),
+                        ),
+                      );
+                    },
+                    icon: const Icon(Icons.add),
+                    label: const Text('Add Your First Book'),
+                  ),
+                ],
+              ),
             );
           }
 
