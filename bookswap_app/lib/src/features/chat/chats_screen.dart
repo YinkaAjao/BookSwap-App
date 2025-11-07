@@ -8,7 +8,7 @@ class ChatsScreen extends ConsumerWidget {
   const ChatsScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context, WidgetRef ref) {  // Add WidgetRef parameter
     final userChatsAsync = ref.watch(userChatsStreamProvider);
     final currentUser = ref.watch(currentUserProvider);
 

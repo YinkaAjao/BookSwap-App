@@ -3,13 +3,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../core/providers/providers.dart';
 import '../../core/models/book_model.dart';
-import 'add_book_screen.dart'; // Add this import
+import 'add_book_screen.dart';
 
 class MyListingsScreen extends ConsumerWidget {
   const MyListingsScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context, WidgetRef ref) {  // Add WidgetRef parameter
     final userBooksAsync = ref.watch(userBooksStreamProvider);
 
     return Scaffold(
@@ -19,7 +19,6 @@ class MyListingsScreen extends ConsumerWidget {
           IconButton(
             icon: const Icon(Icons.add),
             onPressed: () {
-              // Navigate to add book screen
               Navigator.push(
                 context,
                 MaterialPageRoute(
@@ -96,7 +95,7 @@ class MyBookCard extends ConsumerWidget {
   const MyBookCard({super.key, required this.book});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context, WidgetRef ref) {  // Add WidgetRef parameter
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Padding(

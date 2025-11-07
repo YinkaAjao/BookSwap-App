@@ -1,58 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/providers/providers.dart';
-
-// Create a provider for notification settings
-final notificationSettingsProvider = NotifierProvider<NotificationSettingsNotifier, NotificationSettings>(() {
-  return NotificationSettingsNotifier();
-});
-
-class NotificationSettings {
-  final bool swapNotifications;
-  final bool chatNotifications;
-
-  NotificationSettings({
-    required this.swapNotifications,
-    required this.chatNotifications,
-  });
-
-  NotificationSettings copyWith({
-    bool? swapNotifications,
-    bool? chatNotifications,
-  }) {
-    return NotificationSettings(
-      swapNotifications: swapNotifications ?? this.swapNotifications,
-      chatNotifications: chatNotifications ?? this.chatNotifications,
-    );
-  }
-}
-
-class NotificationSettingsNotifier extends Notifier<NotificationSettings> {
-  @override
-  NotificationSettings build() {
-    // Default values for notification settings
-    return NotificationSettings(
-      swapNotifications: true,
-      chatNotifications: true,
-    );
-  }
-
-  void toggleSwapNotifications() {
-    state = state.copyWith(swapNotifications: !state.swapNotifications);
-  }
-
-  void toggleChatNotifications() {
-    state = state.copyWith(chatNotifications: !state.chatNotifications);
-  }
-
-  void setSwapNotifications(bool value) {
-    state = state.copyWith(swapNotifications: value);
-  }
-
-  void setChatNotifications(bool value) {
-    state = state.copyWith(chatNotifications: value);
-  }
-}
+import '../../core/theme/app_theme.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -62,6 +11,8 @@ class SettingsScreen extends ConsumerWidget {
     final user = ref.watch(currentUserProvider);
     final authService = ref.read(authServiceProvider);
     final notificationSettings = ref.watch(notificationSettingsProvider);
+    final themeMode = ref.watch(themeProvider);
+    final isDarkMode = themeMode == AppThemeMode.dark;
 
     return Scaffold(
       appBar: AppBar(
@@ -125,6 +76,54 @@ class SettingsScreen extends ConsumerWidget {
                   ),
                 ),
                 const SizedBox(height: 16),
+                
+                // Appearance Section
+                Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Appearance',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        SwitchListTile(
+                          title: const Text('Dark Mode'),
+                          subtitle: Text(isDarkMode 
+                              ? 'Dark theme enabled' 
+                              : 'Light theme enabled'),
+                          value: isDarkMode,
+                          onChanged: (value) async {
+                            await ref.read(themeProvider.notifier).toggleTheme();
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(value 
+                                      ? 'Dark mode enabled' 
+                                      : 'Light mode enabled'),
+                                  duration: const Duration(seconds: 2),
+                                  backgroundColor: AppColors.primaryAccent,
+                                  behavior: SnackBarBehavior.floating,
+                                ),
+                              );
+                            }
+                          },
+                          secondary: Icon(
+                            isDarkMode ? Icons.dark_mode : Icons.light_mode,
+                            color: isDarkMode ? AppColors.primaryAccent : Colors.grey,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                
                 // Notifications Section
                 Card(
                   child: Padding(
@@ -152,6 +151,8 @@ class SettingsScreen extends ConsumerWidget {
                                     ? 'Swap notifications enabled' 
                                     : 'Swap notifications disabled'),
                                 duration: const Duration(seconds: 2),
+                                backgroundColor: AppColors.primaryAccent,
+                                behavior: SnackBarBehavior.floating,
                               ),
                             );
                           },
@@ -168,6 +169,8 @@ class SettingsScreen extends ConsumerWidget {
                                     ? 'Chat notifications enabled' 
                                     : 'Chat notifications disabled'),
                                 duration: const Duration(seconds: 2),
+                                backgroundColor: AppColors.primaryAccent,
+                                behavior: SnackBarBehavior.floating,
                               ),
                             );
                           },
@@ -177,6 +180,7 @@ class SettingsScreen extends ConsumerWidget {
                   ),
                 ),
                 const SizedBox(height: 16),
+                
                 // Actions Section
                 Card(
                   child: Padding(

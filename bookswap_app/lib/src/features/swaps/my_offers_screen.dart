@@ -9,7 +9,7 @@ class MyOffersScreen extends ConsumerWidget {
   const MyOffersScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context, WidgetRef ref) {  // Add WidgetRef parameter
     final requesterSwapsAsync = ref.watch(requesterSwapsStreamProvider);
 
     return Scaffold(
