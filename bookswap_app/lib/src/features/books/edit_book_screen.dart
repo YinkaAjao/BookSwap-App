@@ -256,7 +256,7 @@ class _EditBookScreenState extends ConsumerState<EditBookScreen> {
               
               // Condition dropdown
               DropdownButtonFormField<BookCondition>(
-                value: _selectedCondition,
+                initialValue: _selectedCondition,
                 decoration: const InputDecoration(
                   labelText: 'Condition *',
                   border: OutlineInputBorder(),

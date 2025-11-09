@@ -38,7 +38,7 @@ class ChatsScreen extends ConsumerWidget {
           ),
         ),
         error: (error, stack) {
-          print('Error loading user chats: $error');
+          debugPrint('Error loading user chats: $error');
           return Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,

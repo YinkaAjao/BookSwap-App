@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import '../../core/providers/providers.dart';
-import '../../core/models/swap_model.dart';
 import 'swap_card.dart';
 
 class MyOffersScreen extends ConsumerWidget {
@@ -39,7 +37,7 @@ class MyOffersScreen extends ConsumerWidget {
           ),
         ),
         error: (error, stack) {
-          print('Error loading requester swaps: $error');
+          debugPrint('Error loading requester swaps: $error');
           return Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,

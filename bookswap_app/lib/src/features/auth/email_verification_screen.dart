@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import '../../core/providers/providers.dart';
 import '../../core/theme/app_theme.dart';
 
@@ -167,7 +166,7 @@ class _EmailVerificationScreenState extends ConsumerState<EmailVerificationScree
                 width: double.infinity,
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: AppColors.errorRed.withOpacity(0.1),
+                  color: AppColors.errorRed.withAlpha(25),
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(color: AppColors.errorRed),
                 ),
@@ -185,7 +184,7 @@ class _EmailVerificationScreenState extends ConsumerState<EmailVerificationScree
                 width: double.infinity,
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: AppColors.successGreen.withOpacity(0.1),
+                  color: AppColors.successGreen.withAlpha(25),
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(color: AppColors.successGreen),
                 ),

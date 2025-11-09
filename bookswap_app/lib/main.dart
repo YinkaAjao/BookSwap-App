@@ -14,14 +14,14 @@ void main() async {
     );
   } catch (e) {
     // Continue running the app even if Firebase fails
-    print('Firebase initialization error: $e');
+    debugPrint('Firebase initialization error: $e');
   }
 
   // Initialize Hive
   try {
     await Hive.initFlutter();
   } catch (e) {
-    print('Hive initialization error: $e');
+    debugPrint('Hive initialization error: $e');
   }
 
   runApp(

@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
@@ -253,7 +254,7 @@ class ThemeNotifier extends Notifier<AppThemeMode> {
       state = isDarkMode ? AppThemeMode.dark : AppThemeMode.light;
     } catch (e) {
       // If Hive fails, fall back to default light theme
-      print('Error initializing theme: $e');
+      debugPrint('Error initializing theme: $e');
       state = AppThemeMode.light;
     }
   }
@@ -267,7 +268,7 @@ class ThemeNotifier extends Notifier<AppThemeMode> {
       state = newThemeMode;
       await box.put(_themeKey, newThemeMode == AppThemeMode.dark);
     } catch (e) {
-      print('Error toggling theme: $e');
+      debugPrint('Error toggling theme: $e');
       // Still update the state even if storage fails
       state = state == AppThemeMode.light ? AppThemeMode.dark : AppThemeMode.light;
     }
@@ -280,7 +281,7 @@ class ThemeNotifier extends Notifier<AppThemeMode> {
       state = mode;
       await box.put(_themeKey, mode == AppThemeMode.dark);
     } catch (e) {
-      print('Error setting theme: $e');
+      debugPrint('Error setting theme: $e');
       state = mode;
     }
   }

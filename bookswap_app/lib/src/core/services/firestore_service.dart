@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/book_model.dart';
 import '../models/swap_model.dart';
@@ -16,7 +17,7 @@ class FirestoreService {
   // Create a new book listing
   Future<void> createBook(Book book) async {
     try {
-      print('Creating book: ${book.title} for user: ${book.ownerId}');
+      debugPrint('Creating book: ${book.title} for user: ${book.ownerId}');
 
       // Validate book data
       if (book.id.isEmpty) {
@@ -30,10 +31,10 @@ class FirestoreService {
       }
 
       await booksCollection.doc(book.id).set(book.toJson());
-      print('Book created successfully: ${book.id}');
+      debugPrint('Book created successfully: ${book.id}');
     } catch (e) {
-      print('Failed to create book: $e');
-      print('Book data: ${book.toJson()}');
+      debugPrint('Failed to create book: $e');
+      debugPrint('Book data: ${book.toJson()}');
       throw Exception('Failed to create book: $e');
     }
   }

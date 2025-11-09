@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'dart:io';
 
@@ -6,7 +7,23 @@ class StorageService {
 
   StorageService(this._storage);
 
-  // Upload book cover image
+  // Upload book cover image - updated for web compatibility
+  Future<String> uploadBookImageBytes(Uint8List imageBytes, String bookId) async {
+    try {
+      final ref = _storage.ref().child('book_covers/$bookId.jpg');
+      final metadata = SettableMetadata(
+        contentType: 'image/jpeg',
+        customMetadata: {'uploaded_by': 'bookswap_app'},
+      );
+      
+      await ref.putData(imageBytes, metadata);
+      return await ref.getDownloadURL();
+    } catch (e) {
+      throw Exception('Failed to upload image: $e');
+    }
+  }
+
+  // Keep the original method for mobile compatibility
   Future<String> uploadBookImage(File imageFile, String bookId) async {
     try {
       final ref = _storage.ref().child('book_covers/$bookId.jpg');
@@ -24,7 +41,7 @@ class StorageService {
       await ref.delete();
     } catch (e) {
       // Log error but don't throw - image deletion shouldn't block book deletion
-      print('Failed to delete image: $e');
+      debugPrint('Failed to delete image: $e');
     }
   }
 }
