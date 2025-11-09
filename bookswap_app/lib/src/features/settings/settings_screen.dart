@@ -151,7 +151,7 @@ class SettingsScreen extends ConsumerWidget {
                                     ? 'Swap notifications enabled' 
                                     : 'Swap notifications disabled'),
                                 duration: const Duration(seconds: 2),
-                                backgroundColor: AppColors.primaryAccent,
+                                backgroundColor: AppColors.primaryDark,
                                 behavior: SnackBarBehavior.floating,
                               ),
                             );
@@ -169,7 +169,7 @@ class SettingsScreen extends ConsumerWidget {
                                     ? 'Chat notifications enabled' 
                                     : 'Chat notifications disabled'),
                                 duration: const Duration(seconds: 2),
-                                backgroundColor: AppColors.primaryAccent,
+                                backgroundColor: AppColors.primaryDark,
                                 behavior: SnackBarBehavior.floating,
                               ),
                             );

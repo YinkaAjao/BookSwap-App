@@ -66,21 +66,21 @@ class AppTheme {
       switchTheme: SwitchThemeData(
         thumbColor: WidgetStateProperty.resolveWith<Color>((states) {
           if (states.contains(WidgetState.selected)) {
-            return AppColors.primaryAccent;
+            return AppColors.primaryDark;
           }
-          return Colors.grey.shade400;
+          return AppColors.primaryAccent;
         }),
         trackColor: WidgetStateProperty.resolveWith<Color>((states) {
           if (states.contains(WidgetState.selected)) {
-            return Color.lerp(AppColors.primaryAccent, Colors.transparent, 0.5) ?? AppColors.primaryAccent.withOpacity(0.5);
+            return AppColors.primaryDark.withOpacity(0.5);
           }
-          return Colors.grey.shade400;
+          return AppColors.primaryAccent;
         }),
         trackOutlineColor: WidgetStateProperty.resolveWith<Color>((states) {
           if (states.contains(WidgetState.selected)) {
-            return AppColors.primaryAccent;
+            return AppColors.primaryDark;
           }
-          return Colors.grey.shade600;
+          return AppColors.primaryAccent;
         }),
       ),
       
@@ -240,7 +240,7 @@ class AppTheme {
         }),
         trackColor: WidgetStateProperty.resolveWith<Color>((states) {
           if (states.contains(WidgetState.selected)) {
-            return Color.lerp(AppColors.primaryAccent, Colors.transparent, 0.5) ?? AppColors.primaryAccent.withOpacity(0.5);
+            return AppColors.primaryAccent.withOpacity(0.5);
           }
           return Colors.grey.shade600;
         }),

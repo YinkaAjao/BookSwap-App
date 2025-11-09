@@ -2,7 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import '../services/auth_service.dart';
 import '../services/storage_service.dart';
 import '../services/firestore_service.dart';
@@ -26,18 +26,47 @@ final firestoreServiceProvider = Provider<FirestoreService>((ref) {
 
 // Auth State Providers
 final authStateProvider = StreamProvider<User?>((ref) {
+  return ref.watch(authServiceProvider).verifiedAuthStateChanges;
+});
+
+// provider for unverified auth state (for verification screen)
+final unverifiedAuthStateProvider = StreamProvider<User?>((ref) {
   return ref.watch(authServiceProvider).authStateChanges;
 });
 
+// provider for verification status
+final emailVerificationProvider = StreamProvider<bool>((ref) {
+  final user = ref.watch(authStateProvider).value;
+  return Stream.value(user?.emailVerified ?? false);
+});
+
+// For verified users only (main app functionality)
 final currentUserProvider = Provider<User?>((ref) {
   final authState = ref.watch(authStateProvider);
   return authState.value;
 });
 
-// User ID Provider (for swap providers)
+// For unverified users (verification screen)
+final currentUnverifiedUserProvider = Provider<User?>((ref) {
+  final authState = ref.watch(unverifiedAuthStateProvider);
+  return authState.value;
+});
+
+// User ID providers for both verified and unverified users
 final currentUserIdProvider = Provider<String?>((ref) {
   final user = ref.watch(currentUserProvider);
   return user?.uid;
+});
+
+final currentUnverifiedUserIdProvider = Provider<String?>((ref) {
+  final user = ref.watch(currentUnverifiedUserProvider);
+  return user?.uid;
+});
+
+// Display name provider that works for any user state
+final userDisplayNameProvider = Provider<String>((ref) {
+  final authService = ref.watch(authServiceProvider);
+  return authService.displayName;
 });
 
 // Book Data Providers
@@ -192,8 +221,7 @@ class NotificationSettingsNotifier extends Notifier<NotificationSettings> {
   }
 }
 
-// Theme Provider - Added to main providers file
-// Use a different name to avoid conflict with Flutter's ThemeMode
+// Theme Provider
 enum AppThemeMode { light, dark }
 
 final themeProvider = NotifierProvider<ThemeNotifier, AppThemeMode>(() {
@@ -201,32 +229,60 @@ final themeProvider = NotifierProvider<ThemeNotifier, AppThemeMode>(() {
 });
 
 class ThemeNotifier extends Notifier<AppThemeMode> {
+  static const String _themeBoxName = 'themeBox';
+  static const String _themeKey = 'isDarkMode';
+
   @override
   AppThemeMode build() {
     return AppThemeMode.light; // Default theme
   }
 
-  // Initialize theme from shared preferences
+  // Initialize theme from Hive storage
   Future<void> initializeTheme() async {
-    final prefs = await SharedPreferences.getInstance();
-    final isDarkMode = prefs.getBool('isDarkMode') ?? false;
-    state = isDarkMode ? AppThemeMode.dark : AppThemeMode.light;
+    try {
+      // Initialize Hive if not already initialized
+      if (!Hive.isBoxOpen(_themeBoxName)) {
+        await Hive.initFlutter();
+      }
+      
+      // Open the theme box
+      final box = await Hive.openBox(_themeBoxName);
+      
+      // Get the stored theme preference
+      final isDarkMode = box.get(_themeKey, defaultValue: false) as bool;
+      state = isDarkMode ? AppThemeMode.dark : AppThemeMode.light;
+    } catch (e) {
+      // If Hive fails, fall back to default light theme
+      print('Error initializing theme: $e');
+      state = AppThemeMode.light;
+    }
   }
 
   // Toggle theme mode
   Future<void> toggleTheme() async {
-    final prefs = await SharedPreferences.getInstance();
-    final newThemeMode = state == AppThemeMode.light ? AppThemeMode.dark : AppThemeMode.light;
-    
-    state = newThemeMode;
-    await prefs.setBool('isDarkMode', newThemeMode == AppThemeMode.dark);
+    try {
+      final box = await Hive.openBox(_themeBoxName);
+      final newThemeMode = state == AppThemeMode.light ? AppThemeMode.dark : AppThemeMode.light;
+      
+      state = newThemeMode;
+      await box.put(_themeKey, newThemeMode == AppThemeMode.dark);
+    } catch (e) {
+      print('Error toggling theme: $e');
+      // Still update the state even if storage fails
+      state = state == AppThemeMode.light ? AppThemeMode.dark : AppThemeMode.light;
+    }
   }
 
   // Set specific theme mode
   Future<void> setTheme(AppThemeMode mode) async {
-    final prefs = await SharedPreferences.getInstance();
-    state = mode;
-    await prefs.setBool('isDarkMode', mode == AppThemeMode.dark);
+    try {
+      final box = await Hive.openBox(_themeBoxName);
+      state = mode;
+      await box.put(_themeKey, mode == AppThemeMode.dark);
+    } catch (e) {
+      print('Error setting theme: $e');
+      state = mode;
+    }
   }
 
   // Check if dark mode is enabled

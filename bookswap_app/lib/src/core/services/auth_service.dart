@@ -4,6 +4,20 @@ import '../exceptions/auth_exception.dart';
 class AuthService {
   final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
 
+  // Use verifiedAuthStateChanges instead of regular authStateChanges
+  Stream<User?> get verifiedAuthStateChanges {
+    return _firebaseAuth.authStateChanges().asyncMap((user) async {
+      if (user != null) {
+        // Reload user to get fresh email verification status
+        await user.reload();
+        final refreshedUser = _firebaseAuth.currentUser;
+        return refreshedUser?.emailVerified == true ? refreshedUser : null;
+      }
+      return null;
+    });
+  }
+
+  // Keep regular authStateChanges for the verification screen
   Stream<User?> get authStateChanges => _firebaseAuth.authStateChanges();
 
   User? get currentUser => _firebaseAuth.currentUser;
@@ -31,22 +45,42 @@ class AuthService {
     }
   }
 
-  // Sign up with email and password
+  // Enhanced signUp method with better display name handling
   Future<User?> signUp({
     required String email,
     required String password,
     required String displayName,
   }) async {
     try {
+      // Validate display name
+      if (displayName.trim().isEmpty) {
+        throw AuthException('invalid-display-name', 'Please enter a display name');
+      }
+      
+      if (displayName.trim().length < 2) {
+        throw AuthException('invalid-display-name', 'Display name must be at least 2 characters long');
+      }
+
       final userCredential = await _firebaseAuth.createUserWithEmailAndPassword(
         email: email.trim(),
         password: password,
       );
       
-      // Update display name
+      // Update display name with proper validation
       if (userCredential.user != null) {
-        await userCredential.user!.updateDisplayName(displayName);
-        await userCredential.user!.sendEmailVerification();
+        try {
+          await userCredential.user!.updateDisplayName(displayName.trim());
+          await userCredential.user!.reload(); // Reload to get updated profile
+          
+          // Send verification email
+          await userCredential.user!.sendEmailVerification();
+          
+          return _firebaseAuth.currentUser; // Get the refreshed user
+        } catch (e) {
+          // If display name update fails, delete the user to maintain consistency
+          await userCredential.user!.delete();
+          throw AuthException('profile-update-failed', 'Failed to set up user profile. Please try again.');
+        }
       }
       
       return userCredential.user;
@@ -57,7 +91,7 @@ class AuthService {
     }
   }
 
-  // Sign in with email and password
+  // Enhanced signIn method with email verification enforcement
   Future<User?> signIn({
     required String email,
     required String password,
@@ -68,15 +102,19 @@ class AuthService {
         password: password,
       );
       
-      // Check if email is verified
+      // Enhanced email verification check
       if (userCredential.user != null && !userCredential.user!.emailVerified) {
+        // Resend verification email automatically
+        await userCredential.user!.sendEmailVerification();
         await _firebaseAuth.signOut();
-        throw AuthException('email-not-verified', 'Please verify your email before signing in.');
+        throw AuthException(
+          'email-not-verified', 
+          'Please verify your email before signing in. A new verification email has been sent to ${userCredential.user!.email}'
+        );
       }
       
       return userCredential.user;
     } on FirebaseAuthException catch (e) {
-      // Provide more specific error messages
       String friendlyMessage = _getFriendlyMessage(e);
       
       // For invalid login, be more generic for security
@@ -103,9 +141,44 @@ class AuthService {
     }
   }
 
+  // Resend verification email
+  Future<void> resendVerificationEmail() async {
+    final user = _firebaseAuth.currentUser;
+    if (user != null && !user.emailVerified) {
+      await user.sendEmailVerification();
+    } else {
+      throw AuthException('invalid-operation', 'No unverified user found.');
+    }
+  }
+
   // Check if user is verified
   bool get isEmailVerified => _firebaseAuth.currentUser?.emailVerified ?? false;
 
-  // Get user display name
-  String? get displayName => _firebaseAuth.currentUser?.displayName;
+  // Enhanced method to get display name with fallbacks
+  String get displayName {
+    final user = _firebaseAuth.currentUser;
+    if (user != null) {
+      // Priority: Display Name -> Email username -> Fallback
+      return user.displayName?.trim() ?? 
+             user.email?.split('@').first.trim() ??
+             'Book Lover';
+    }
+    return 'Unknown User';
+  }
+
+  // Method to update display name
+  Future<void> updateDisplayName(String newDisplayName) async {
+    final user = _firebaseAuth.currentUser;
+    if (user != null) {
+      if (newDisplayName.trim().isEmpty) {
+        throw AuthException('invalid-name', 'Display name cannot be empty');
+      }
+      if (newDisplayName.trim().length < 2) {
+        throw AuthException('invalid-name', 'Display name must be at least 2 characters long');
+      }
+      
+      await user.updateDisplayName(newDisplayName.trim());
+      await user.reload(); // Reload to get updated profile
+    }
+  }
 }

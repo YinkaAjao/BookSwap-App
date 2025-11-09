@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:firebase_auth/firebase_auth.dart'; // Add this import
 import 'package:hive_flutter/hive_flutter.dart';
 import 'src/core/providers/providers.dart';
 import 'src/core/theme/app_theme.dart';
 import 'src/features/auth/login_screen.dart';
+import 'src/features/auth/email_verification_screen.dart'; // Add this import
 import 'src/features/main_navigation.dart';
 
 class BookSwapApp extends ConsumerStatefulWidget {
@@ -31,11 +33,23 @@ class _BookSwapAppState extends ConsumerState<BookSwapApp> {
         _isThemeInitialized = true;
       });
     } catch (e) {
-      print('Theme initialization error: $e');
+      // Use debugPrint instead of print for better logging
+      debugPrint('Theme initialization error: $e');
       setState(() {
         _isThemeInitialized = true;
         _initializationError = true;
       });
+    }
+  }
+
+  // Helper method to determine which screen to show based on auth state
+  Widget _buildAuthWrapper(User? user) { // User class now imported
+    if (user == null) {
+      return const LoginScreen();
+    } else if (!user.emailVerified) {
+      return const EmailVerificationScreen();
+    } else {
+      return const MainNavigation();
     }
   }
 
@@ -118,13 +132,8 @@ class _BookSwapAppState extends ConsumerState<BookSwapApp> {
       darkTheme: AppTheme.darkTheme,
       themeMode: themeMode == AppThemeMode.dark ? ThemeMode.dark : ThemeMode.light,
       debugShowCheckedModeBanner: false,
-      home: ref.watch(authStateProvider).when(
-        data: (user) {
-          if (user != null) {
-            return const MainNavigation();
-          }
-          return const LoginScreen();
-        },
+      home: ref.watch(unverifiedAuthStateProvider).when(
+        data: (user) => _buildAuthWrapper(user),
         loading: () => Scaffold(
           backgroundColor: AppColors.surfaceLight,
           body: Center(
@@ -139,10 +148,24 @@ class _BookSwapAppState extends ConsumerState<BookSwapApp> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Text('Authentication Error'),
-                Text(error.toString()),
+                Text(
+                  'Authentication Error',
+                  style: TextStyle(
+                    color: AppColors.textDark,
+                    fontSize: 16,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  error.toString(),
+                  style: TextStyle(
+                    color: AppColors.textLight,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 16),
                 ElevatedButton(
-                  onPressed: () => ref.invalidate(authStateProvider),
+                  onPressed: () => ref.invalidate(unverifiedAuthStateProvider),
                   child: const Text('Retry'),
                 ),
               ],
