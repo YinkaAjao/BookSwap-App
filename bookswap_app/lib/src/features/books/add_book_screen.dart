@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
-import 'dart:io';
+import 'dart:typed_data';
 import '../../core/providers/providers.dart';
 import '../../core/models/book_model.dart';
 
@@ -19,17 +19,22 @@ class _AddBookScreenState extends ConsumerState<AddBookScreen> {
   
   BookCondition _selectedCondition = BookCondition.good;
   bool _isLoading = false;
-  String? _imageUrl;
   String? _errorMessage;
-  File? _imageFile;
+  Uint8List? _imageBytes;
 
   Future<void> _pickImage() async {
     final picker = ImagePicker();
-    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+    final pickedFile = await picker.pickImage(
+      source: ImageSource.gallery,
+      maxWidth: 800,
+      maxHeight: 800,
+      imageQuality: 80,
+    );
     
     if (pickedFile != null && mounted) {
+      final bytes = await pickedFile.readAsBytes();
       setState(() {
-        _imageFile = File(pickedFile.path);
+        _imageBytes = bytes;
       });
     }
   }
@@ -60,7 +65,7 @@ class _AddBookScreenState extends ConsumerState<AddBookScreen> {
         throw Exception('Invalid user ID');
       }
 
-      final ownerName = currentUser.displayName ?? currentUser.email?.split('@')[0] ?? 'Unknown User';
+      final ownerName = ref.read(userDisplayNameProvider);
       
       if (ownerName.isEmpty) {
         throw Exception('Could not determine user name');
@@ -68,10 +73,22 @@ class _AddBookScreenState extends ConsumerState<AddBookScreen> {
 
       // Upload image to Firebase Storage if selected
       String? uploadedImageUrl;
-      if (_imageFile != null) {
-        final storageService = ref.read(storageServiceProvider);
-        final bookId = 'book_${DateTime.now().millisecondsSinceEpoch}_${currentUser.uid}';
-        uploadedImageUrl = await storageService.uploadBookImage(_imageFile!, bookId);
+      if (_imageBytes != null) {
+        try {
+          final storageService = ref.read(storageServiceProvider);
+          final bookId = 'book_${DateTime.now().millisecondsSinceEpoch}_${currentUser.uid}';
+          uploadedImageUrl = await storageService.uploadBookImageBytes(_imageBytes!, bookId);
+        } catch (e) {
+          // If image upload fails, continue without image but warn user
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Image upload failed: $e. Continuing without image.'),
+                backgroundColor: Colors.orange,
+              ),
+            );
+          }
+        }
       }
 
       final book = Book(
@@ -176,11 +193,11 @@ class _AddBookScreenState extends ConsumerState<AddBookScreen> {
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(color: Colors.grey[300]!),
                   ),
-                  child: _imageFile != null
+                  child: _imageBytes != null
                       ? ClipRRect(
                           borderRadius: BorderRadius.circular(12),
-                          child: Image.file(
-                            _imageFile!,
+                          child: Image.memory(
+                            _imageBytes!,
                             fit: BoxFit.cover,
                             width: double.infinity,
                             height: double.infinity,

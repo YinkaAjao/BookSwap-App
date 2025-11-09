@@ -38,7 +38,6 @@ class MyListingsScreen extends ConsumerWidget {
           child: CircularProgressIndicator(),
         ),
         error: (error, stack) {
-          // Remove print statement and use debugPrint if needed
           return Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -261,7 +260,6 @@ class _MyBookCardState extends ConsumerState<MyBookCard> {
 
   @override
   Widget build(BuildContext context) {
-    // Use ref.read inside build method instead of making build method async
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Padding(

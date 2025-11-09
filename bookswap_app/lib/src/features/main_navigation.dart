@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../core/providers/providers.dart';
 import 'books/browse_books_screen.dart';
 import 'books/my_listings_screen.dart';
 import 'swaps/my_offers_screen.dart';

@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:firebase_auth/firebase_auth.dart'; // Add this import
-import 'package:hive_flutter/hive_flutter.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'src/core/providers/providers.dart';
 import 'src/core/theme/app_theme.dart';
 import 'src/features/auth/login_screen.dart';
-import 'src/features/auth/email_verification_screen.dart'; // Add this import
+import 'src/features/auth/email_verification_screen.dart';
 import 'src/features/main_navigation.dart';
 
 class BookSwapApp extends ConsumerStatefulWidget {

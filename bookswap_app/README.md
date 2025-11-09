@@ -1,16 +1,33 @@
-# bookswap_app
+# BookSwap App
 
-A new Flutter project.
+A Flutter mobile application for students to exchange textbooks.
 
-## Getting Started
+## Tech Stack:
 
-This project is a starting point for a Flutter application.
+Frontend: Flutter with Riverpod
 
-A few resources to get you started if this is your first Flutter project:
+Backend: Firebase (Auth, Firestore, Storage)
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+State Management: Riverpod
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## Features
+- User Authentication with Email Verification
+- Book Listings with Image Upload
+- Real-time Swap Offers
+- In-app Chat System
+- Dark/Light Theme Support
+
+## Setup Instructions
+1. Clone repository
+2. Run `flutter pub get`
+3. Run `flutter run`
+
+## Firebase Configuration
+- Authentication: Email/Password
+- Firestore: Books, Swaps, Chats collections
+- Storage: Book cover images
+
+## Architecture
+- Riverpod for State Management
+- Firebase Backend Services
+- Clean Architecture Pattern

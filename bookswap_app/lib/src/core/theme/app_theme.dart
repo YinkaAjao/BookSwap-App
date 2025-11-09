@@ -72,7 +72,7 @@ class AppTheme {
         }),
         trackColor: WidgetStateProperty.resolveWith<Color>((states) {
           if (states.contains(WidgetState.selected)) {
-            return AppColors.primaryDark.withOpacity(0.5);
+            return AppColors.primaryDark.withAlpha(128);
           }
           return AppColors.primaryAccent;
         }),
@@ -240,7 +240,7 @@ class AppTheme {
         }),
         trackColor: WidgetStateProperty.resolveWith<Color>((states) {
           if (states.contains(WidgetState.selected)) {
-            return AppColors.primaryAccent.withOpacity(0.5);
+            return AppColors.primaryAccent.withAlpha(128);
           }
           return Colors.grey.shade600;
         }),
